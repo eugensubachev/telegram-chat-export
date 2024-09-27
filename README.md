@@ -25,7 +25,7 @@ pip3 install -r requirements.txt
 ```
 Или установите библиотеки вручную:
 ```bash
-pip install telethon tqdm
+pip3 install telethon tqdm
 ```
 
 ## Использование
