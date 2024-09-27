@@ -8,15 +8,33 @@ api_hash = 'YOUR_API_HASH'  # Take from here https://my.telegram.org/apps
 
 client = TelegramClient('session_name', api_id, api_hash)
 
+# Function to request and convert the date input from the user
+def get_date_input(prompt):
+    while True:
+        date_str = input(prompt)
+        try:
+            # Return a naive datetime (without timezone information)
+            return datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            print("Invalid date format. Please enter the date in YYYY-MM-DD format (e.g., 2024-09-27).")
+
 async def export_chat():
     print("Connecting to Telegram...")
     await client.start()  # Start the client and authenticate
     print("Successfully connected!")
 
-    # Ask the user for the chat ID or username
-    chat = input("Enter the chat ID or username (without @): ")
+    # Ask the user for the date range
+    start_date = get_date_input("Export messages from (YYYY-MM-DD): ")
+    end_date = get_date_input("Export messages up to (YYYY-MM-DD): ")
 
-    print(f"Exporting all messages from chat '{chat}'")
+    # Ask the user for the chat ID or username
+    chat = input("Enter the chat ID or username: ").strip()
+
+    # Remove '@' if it's present in the username
+    if chat.startswith('@'):
+        chat = chat[1:]
+
+    print(f"Exporting all messages from chat '{chat}' between {start_date} and {end_date}")
 
     # Attempt to retrieve the chat entity
     try:
@@ -31,13 +49,18 @@ async def export_chat():
         # Write the column headers
         writer.writerow(["Date", "Full Name", "Username", "Message"])
 
-        # Count the total number of messages for the progress bar
-        total_messages = await client.get_messages(chat_entity, limit=0)  # Get the total number of messages
+        # Initialize the progress bar
         message_count = 0  # Counter for processed messages
 
-        # Initialize the progress bar
-        with tqdm(total=total_messages.total, desc="Exporting messages", unit="message", dynamic_ncols=True) as pbar:
-            async for message in client.iter_messages(chat_entity, reverse=True):
+        # Initialize the progress bar and count the total number of messages
+        with tqdm(desc="Exporting messages", unit="message", dynamic_ncols=True) as pbar:
+            async for message in client.iter_messages(chat_entity, reverse=True, offset_date=end_date):
+                # Convert message date to a naive format (without timezone)
+                message_date = message.date.replace(tzinfo=None)
+
+                if message_date < start_date:  # Stop processing messages older than the start_date
+                    break
+
                 if message.sender_id:  # Check if the message has a sender
                     sender = await message.get_sender()  # Get information about the sender
 
