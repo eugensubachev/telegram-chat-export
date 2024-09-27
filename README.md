@@ -10,7 +10,7 @@
 
 ## Требования
 
-Для работы скрипта необходимы:
+Для работы скрипта нужно:
 
 - **Python 3.6+**
 - Telegram **API ID** и **API Hash**. Их можно получить на [my.telegram.org](https://my.telegram.org/apps).
