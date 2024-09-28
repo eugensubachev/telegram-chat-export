@@ -1,5 +1,6 @@
 from telethon import TelegramClient
 import csv
+import os
 from tqdm import tqdm
 
 api_id = 'YOUR_API_ID'  # Take from here https://my.telegram.org/apps
@@ -19,6 +20,14 @@ async def export_chat():
     if chat.startswith('@'):
         chat = chat[1:]
 
+    # Ask the user if media files should be downloaded
+    download_media = input("Do you want to download media files? (y/n): ").strip().lower() == 'y'
+
+    # Set the folder for media files
+    media_folder = "downloaded_media"
+    if download_media and not os.path.exists(media_folder):
+        os.makedirs(media_folder)
+
     print(f"Exporting all messages from chat '{chat}'")
 
     # Attempt to retrieve the chat entity
@@ -36,7 +45,7 @@ async def export_chat():
     with open("chat_history_with_users.csv", "w", newline='', encoding="utf-8") as file:
         writer = csv.writer(file)
         # Write the column headers
-        writer.writerow(["Date", "Full Name", "Username", "Message"])
+        writer.writerow(["Date", "Full Name", "Username", "Message", "Media File"])
 
         # Initialize the progress bar
         message_count = 0  # Counter for processed messages
@@ -60,8 +69,17 @@ async def export_chat():
                         full_name = "Unknown"
                         username = "No username"
 
-                    # Write the date, full name, username, and message text to the CSV file
-                    writer.writerow([message.date, full_name, username, message.text or 'Media/Other content'])
+                    # Download media file if present
+                    media_path = None
+                    if download_media and message.media:
+                        try:
+                            # Download the media file
+                            media_path = await message.download_media(file=media_folder)
+                        except Exception as e:
+                            print(f"Error downloading media: {e}")
+                    
+                    # Write the date, full name, username, message text, and media path (if any) to the CSV file
+                    writer.writerow([message.date, full_name, username, message.text or 'Media/Other content', media_path or ''])
 
                     # Increment the message count
                     message_count += 1
