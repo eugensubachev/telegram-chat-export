@@ -28,6 +28,10 @@ async def export_chat():
         print(f"Error: Could not find chat '{chat}'. Please check the ID or username.")
         return
 
+    # Count total number of messages for the progress bar
+    total_messages = await client.get_messages(chat_entity, limit=0)
+    total_count = total_messages.total
+
     # Open a file in write mode ("w") to save all messages
     with open("chat_history_with_users.csv", "w", newline='', encoding="utf-8") as file:
         writer = csv.writer(file)
@@ -38,7 +42,7 @@ async def export_chat():
         message_count = 0  # Counter for processed messages
 
         # Initialize the progress bar and count the total number of messages
-        with tqdm(desc="Exporting messages", unit="message", dynamic_ncols=True) as pbar:
+        with tqdm(desc="Exporting messages", unit="message", total=total_count, dynamic_ncols=True) as pbar:
             async for message in client.iter_messages(chat_entity, reverse=True):
                 
                 if message.sender_id:  # Check if the message has a sender
