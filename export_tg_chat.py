@@ -16,9 +16,13 @@ async def export_chat():
     # Ask the user for the chat ID or username
     chat = input("Enter the chat ID or username: ").strip()
 
-    # Remove '@' if it's present in the username
-    if chat.startswith('@'):
-        chat = chat[1:]
+    # Check if the input is a number (chat ID, including negative IDs)
+    try:
+        chat = int(chat)  # Attempt to convert input to an integer (ID case, allows negative values)
+    except ValueError:
+        # It's not a number, so treat it as a username
+        if chat.startswith('@'):
+            chat = chat[1:]  # Remove '@' if it's present in the username
 
     # Ask the user if media files should be downloaded
     download_media = input("Do you want to download media files? (y/n): ").strip().lower() == 'y'
